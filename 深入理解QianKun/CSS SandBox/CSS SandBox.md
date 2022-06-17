@@ -191,7 +191,7 @@ function App() {
 
 ```
 
-index.css文件
+style.module.css文件
 
 ```sass
 .text {
@@ -706,7 +706,7 @@ private rewrite(rules: CSSRule[], prefix: string = '') {
 
     rules.forEach((rule) => {
       switch (rule.type) {
-				// 普通选择器类型
+	      // 普通选择器类型
         case RuleType.STYLE:
           css += this.ruleStyle(rule as CSSStyleRule, prefix);
           break;
