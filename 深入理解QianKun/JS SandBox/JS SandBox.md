@@ -844,11 +844,11 @@ const setTrap = (p: PropertyKey, value: any, originalValue: any, sync2Window = t
 
 ![Untitled](./img/ProxySandbox.png)
 
-首先我们需要创建一个window副本`fakeWindow`
+首先我们需要创建一个window副本`fakeWindow`和`propertiesWithGetter`,后一个是用来记录有`getter`且不可配置的Map对象，大概包括`window`、`document`、`location`、`top`等，这些属性拷贝以后会成为非法调用的对象，所以我们需要从`globalContext`上进行访问，具体实现参考`proxy`中的get部分
 
 ```tsx
 function createFakeWindow(globalContext: Window) {
-	// 记录 window 对象上的 getter 属性，原生的有：window、document、location、top
+	// 记录 window 对象上的 get 属性，原生的有：window、document、location、top
   const propertiesWithGetter = new Map<PropertyKey, boolean>();
   const fakeWindow = {} as FakeWindow;
 
@@ -878,6 +878,7 @@ function createFakeWindow(globalContext: Window) {
           }
         }
 
+        // 把有get属性的记录到propertiesWithGetter Map对象中
         if (hasGetter) propertiesWithGetter.set(p, true);
 				// 冻结某个属性，冻结以后该属性不可修改
         rawObjectDefineProperty(fakeWindow, p, Object.freeze(descriptor));
@@ -1229,7 +1230,7 @@ get: (target: FakeWindow, p: PropertyKey): any => {
         if (p === 'eval') {
           return eval;
         }
-				//一些异常处理获取value的真实值
+				//一些异常处理获取value的真实值，由于某些对象在fakeWindow上访问会出现非法调用的情况，因此需要在globalContext上访问
         const value = propertiesWithGetter.has(p)
           ? (globalContext as any)[p]
           : p in target
